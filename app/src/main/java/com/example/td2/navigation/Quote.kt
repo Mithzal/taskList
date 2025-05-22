@@ -29,10 +29,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.MaterialTheme
+
 
 
 class QuoteViewModel : ViewModel() {
@@ -63,12 +73,12 @@ class QuoteViewModel : ViewModel() {
 
 sealed class QuoteUiState {
     object Loading : QuoteUiState()
-    data class Success(val quote: String, val imageUrl: String = "https://st.depositphotos.com/1013513/2312/i/450/depositphotos_23122598-stock-photo-silhouette-of-happy-young-woman.jpg") : QuoteUiState()
+    data class Success(val quote: String, val imageUrl: String = "https://picsum.photos/200/300") : QuoteUiState()
     data class Error(val message: String) : QuoteUiState()
 }
 
 @Composable
-fun quoteScreen(viewModel: QuoteViewModel = viewModel(), navController : NavController) {
+fun quoteScreen(viewModel: QuoteViewModel = viewModel(), navController: NavController) {
     val quoteState = viewModel.quoteState.value
     var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
@@ -90,41 +100,66 @@ fun quoteScreen(viewModel: QuoteViewModel = viewModel(), navController : NavCont
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(5.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         when (quoteState) {
             is QuoteUiState.Loading -> {
                 CircularProgressIndicator()
             }
             is QuoteUiState.Success -> {
-                Text(text = quoteState.quote)
+                // Image en fond d'écran
                 if (imageBitmap != null) {
                     Image(
                         bitmap = imageBitmap!!,
-                        contentDescription = "Image",
+                        contentDescription = "Fond d'écran",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    // Conteneur semi-transparent pour la citation
+                    Box(
                         modifier = Modifier
-                            .padding(top = 16.dp)
-                            .size(900.dp, 600.dp)
-                    )
+                            .padding(16.dp)
+                            .background(Color.Black.copy(alpha = 0.6f), shape = RoundedCornerShape(8.dp))
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = quoteState.quote,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
+                    CircularProgressIndicator()
                 }
             }
             is QuoteUiState.Error -> {
-                Text(text = "Erreur: ${quoteState.message}")
-                Button(onClick = { viewModel.fetchQuote() }) {
-                    Text("Réessayer")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "Erreur: ${quoteState.message}")
+                    Button(onClick = { viewModel.fetchQuote() }) {
+                        Text("Réessayer")
+                    }
                 }
             }
         }
-        Button(onClick = {navController.navigate(NavRoutes.MAIN_SCREEN.route)}){
-            Text("Go back !")
-        }    }
+
+        // Bouton retour en bas de l'écran
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Button(onClick = { navController.navigate(NavRoutes.MAIN_SCREEN.route) }) {
+                Text("Go back !")
+            }
+        }
+    }
 }
+
