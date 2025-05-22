@@ -34,6 +34,7 @@ import com.example.td2.model.Task
 import com.example.td2.navigation.DetailScreen
 import com.example.td2.navigation.NavRoutes
 import com.example.td2.navigation.TaskExecutionScreen
+import com.example.td2.navigation.quoteScreen
 
 @Composable
 fun AppNavigation() {
@@ -54,6 +55,7 @@ fun AppNavigation() {
             DetailScreen(title, description, isCompleted, navController = navController)
         }
         composable(NavRoutes.PROGRESS.route) { TaskExecutionScreen() }
+        composable(NavRoutes.QUOTE.route) { quoteScreen(navController = navController) }
 
     }
 }
@@ -103,6 +105,9 @@ fun TaskListScreen( modifier: Modifier = Modifier, navController: NavController)
         }
         Button(onClick = {navController.navigate(NavRoutes.PROGRESS.route)}) {
             Text("Afficher le progrès")
+        }
+        Button(onClick = {navController.navigate(NavRoutes.QUOTE.route)}){
+            Text("Quote of the day !")
         }
     }
 
