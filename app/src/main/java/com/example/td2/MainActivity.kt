@@ -30,20 +30,32 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import com.example.td2.model.Task
+import com.example.td2.model.TasksRepository
+import kotlinx.coroutines.flow.Flow
 import com.example.td2.navigation.DetailScreen
 import com.example.td2.navigation.NavRoutes
 import com.example.td2.navigation.TaskExecutionScreen
 import com.example.td2.navigation.quoteScreen
+import android.app.Application
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun AppNavigation() {
-
     val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = "mainScreen"){
-        composable(NavRoutes.MAIN_SCREEN.route) {TaskListScreen(navController = navController)}
-        composable(NavRoutes.ADD_TASK.route){ AddTaskScreen(navController = navController) }
+    NavHost(navController = navController, startDestination = "mainScreen") {
+        composable(NavRoutes.MAIN_SCREEN.route) {
+            TaskListScreen(navController = navController)
+        }
+        composable(NavRoutes.ADD_TASK.route) { AddTaskScreen(navController = navController) }
         composable(NavRoutes.TASK_DETAIL.route, arguments = listOf(
             navArgument("title") { type = NavType.StringType },
             navArgument("description") { type = NavType.StringType },
@@ -56,8 +68,11 @@ fun AppNavigation() {
         }
         composable(NavRoutes.PROGRESS.route) { TaskExecutionScreen() }
         composable(NavRoutes.QUOTE.route) { quoteScreen(navController = navController) }
-
     }
+}
+
+val LocalApp = staticCompositionLocalOf<Application> {
+    error("No Application provided")
 }
 
 class MainActivity : ComponentActivity() {
@@ -65,52 +80,50 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Td2Theme {
-                AppNavigation()
-
+            // Fournit l'instance Application à la composition
+            CompositionLocalProvider(LocalApp provides application) {
+                Td2Theme {
+                    AppNavigation()
+                }
             }
         }
     }
 }
 
-var tasks = mutableListOf(
-    Task("Travailler", "BOSSE !!!", false,0.1f),
-    Task("Courses", "Acheter oeufs, lait et farine ", true, 0.2f),
-    Task("Sport", "Faire du vélo", false, 0.3f),
-    Task("Ménage", "Faire la vaisselle", false, 0.1f),
-    Task("Loisirs", "Regarder un film", true, 0.2f)
-)
-
-
 @Composable
-fun TaskListScreen( modifier: Modifier = Modifier, navController: NavController) {
+fun TaskListScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewModel: TaskListViewModel = viewModel(
+        factory = TaskListViewModelFactory(LocalApp.current.let { (it as TaskApplication).container.taskRepository })
+    )
+) {
+    val tasks by viewModel.tasks.collectAsState(initial = emptyList())
 
-    Column(modifier = modifier
-        .fillMaxSize()
-        .fillMaxWidth(),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         for (task in tasks) {
-
             TaskItem(
-                task, Modifier.align(Alignment.CenterHorizontally),
+                task,
+                Modifier.align(Alignment.CenterHorizontally),
                 navController
             )
-
-
         }
         Button(onClick = { navController.navigate(NavRoutes.ADD_TASK.route) }) {
             Text(text = "Ajouter une tâche")
         }
-        Button(onClick = {navController.navigate(NavRoutes.PROGRESS.route)}) {
+        Button(onClick = { navController.navigate(NavRoutes.PROGRESS.route) }) {
             Text("Afficher le progrès")
         }
-        Button(onClick = {navController.navigate(NavRoutes.QUOTE.route)}){
+        Button(onClick = { navController.navigate(NavRoutes.QUOTE.route) }) {
             Text("Quote of the day !")
         }
     }
-
 }
 
 @Composable
@@ -123,9 +136,7 @@ fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavContro
             val description = Uri.encode(task.description)
             val isCompleted = task.isCompleted
             navController.navigate(NavRoutes.TASK_DETAIL.createRoute(title, description, isCompleted))
-        })
-            
-             {
+        }) {
             Checkbox(checked = modified, onCheckedChange = { modified = it })
             Text(text = task.title)
             Text(text = task.description)
@@ -145,7 +156,22 @@ fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavContro
 fun GreetingPreview() {
     Td2Theme {
         AppNavigation()
-
     }
 }
 
+// ViewModel pour la liste des tâches
+
+// Remplacez 'YourApplication' par le nom réel de votre classe Application qui contient le container/repository
+class TaskListViewModel(private val repository: TasksRepository) : ViewModel() {
+    val tasks: Flow<List<Task>> = repository.getAllTasksStream()
+}
+
+class TaskListViewModelFactory(private val repository: TasksRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(TaskListViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return TaskListViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

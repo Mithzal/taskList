@@ -13,10 +13,28 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.td2.model.Task
 import com.example.td2.navigation.NavRoutes
+import com.example.td2.model.TasksRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import android.app.Application
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import com.example.td2.model.AppContainer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import android.content.Context
+import com.example.td2.model.AppDataContainer
+import com.example.td2.model.OfflineTaskRepository
+
 
 class AddTaskActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,33 +45,140 @@ class AddTaskActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun AddTaskScreen(navController: NavController) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+class AddTaskViewModel(private val tasksRepository: TasksRepository) : androidx.lifecycle.ViewModel() {
+    var taskUiState by mutableStateOf(TaskUiState())
+        private set
 
-    Column {
-        TextField(
-            value=title,
-            onValueChange = {title = it},
-            label = { Text("Titre de la tâche") }
+    // Ajoute un état pour notifier la sauvegarde
+    var taskSaved by mutableStateOf(false)
+        private set
 
-        )
-        TextField(
-            value=description,
-            onValueChange = {description = it},
-            label = { Text("Description de la tâche") }
+    fun updateUiState(taskDetails: TaskDetails){
+        taskUiState = TaskUiState(taskDetails= taskDetails, isEntryValid = validateInput(taskDetails))
+    }
 
-        )
-        Row {
-            Button(onClick = {navController.navigate(NavRoutes.MAIN_SCREEN.route)}) { Text(text="Cancel")}
-            Button(onClick ={
-                val progress = 0.1f + (0.5f - 0.1f) * kotlin.random.Random.nextFloat()
-                val newTask= Task(title, description, false, progress )
-                tasks.add(newTask)
-                navController.navigate(NavRoutes.MAIN_SCREEN.route)
-            } ) {Text(text="Add") }
+    fun saveTask() {
+        if (validateInput()) {
+            viewModelScope.launch {
+                tasksRepository.insertTask(taskUiState.taskDetails.toTask())
+                taskSaved = true
+            }
         }
     }
 
+    private fun validateInput(uiState : TaskDetails = taskUiState.taskDetails) : Boolean{
+        return uiState.name.isNotBlank() && uiState.description.isNotBlank()
+                && uiState.progressionSpeed in 0f..1f
+    }
+
+}
+
+class TaskApplication : Application() {
+    lateinit var container: AppContainer
+
+    override fun onCreate() {
+        super.onCreate()
+        container = AppDataContainer(this)
+    }
+}
+
+
+
+
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        // Récupérer l'application
+        initializer {
+            val application = (this[AndroidViewModelFactory.APPLICATION_KEY] as Application)
+            val tasksRepository = (application as TaskApplication).container.taskRepository
+
+            AddTaskViewModel(tasksRepository = tasksRepository)
+        }
+    }
+}
+
+data class TaskUiState(
+    val taskDetails : TaskDetails = TaskDetails(),
+    val isEntryValid : Boolean = false
+)
+
+data class TaskDetails(
+    val id : Int =0,
+    val name : String = "",
+    val description : String = "",
+    val isCompleted : Boolean = false,
+    val progressionSpeed : Float = 0f
+)
+
+fun TaskDetails.toTask() : Task = Task(
+    id = id,
+    title = name,
+    description = description,
+    isCompleted = isCompleted,
+    progressionSpeed = progressionSpeed
+)
+
+fun Task.toTaskDetails(): TaskDetails = TaskDetails(
+    id = id,
+    name = title,
+    description = description,
+    isCompleted = isCompleted,
+    progressionSpeed = progressionSpeed
+)
+
+fun Task.toTaskUiState(isEntryValid: Boolean = false): TaskUiState = TaskUiState(
+    taskDetails = this.toTaskDetails(),
+    isEntryValid = isEntryValid
+)
+
+@Composable
+fun AddTaskScreen(
+    navController: NavController,
+    viewModel: AddTaskViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = AppViewModelProvider.Factory
+    )
+) {
+    val taskUiState = viewModel.taskUiState
+
+    // Observe l'état de sauvegarde pour naviguer après ajout
+    if (viewModel.taskSaved) {
+        LaunchedEffect(Unit) {
+            navController.navigate(NavRoutes.MAIN_SCREEN.route)
+        }
+    }
+
+    Column {
+        TextField(
+            value = taskUiState.taskDetails.name,
+            onValueChange = {
+                viewModel.updateUiState(taskUiState.taskDetails.copy(name = it))
+            },
+            label = { Text("Titre de la tâche") }
+        )
+
+        TextField(
+            value = taskUiState.taskDetails.description,
+            onValueChange = {
+                viewModel.updateUiState(taskUiState.taskDetails.copy(description = it))
+            },
+            label = { Text("Description de la tâche") }
+        )
+
+        Row {
+            Button(onClick = { navController.navigate(NavRoutes.MAIN_SCREEN.route) }) {
+                Text(text = "Cancel")
+            }
+
+            Button(
+                onClick = {
+                    val progress = 0.1f + (0.5f - 0.1f) * kotlin.random.Random.nextFloat()
+                    viewModel.updateUiState(taskUiState.taskDetails.copy(progressionSpeed = progress))
+                    viewModel.saveTask()
+                },
+                enabled = taskUiState.isEntryValid
+            ) {
+                Text(text = "Add")
+            }
+        }
+    }
 }

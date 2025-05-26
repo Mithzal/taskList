@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.td2.model.Task
-import com.example.td2.tasks
 import kotlinx.coroutines.*
 
 
@@ -26,7 +25,7 @@ import kotlinx.coroutines.*
 fun TaskExecutionScreen() {
     // Utiliser mutableStateListOf au lieu de mutableStateOf pour une liste
     val tasksState = remember { mutableStateListOf<Task>().apply {
-        addAll(tasks)
+        //addAll(tasks)
     }}
     val scope = rememberCoroutineScope()
     val isRunning = remember { mutableStateOf(false) }
@@ -39,13 +38,13 @@ fun TaskExecutionScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         // Important: itérer sur tasksState et non sur tasks
-        for (task in tasksState) {
-            Text(task.title)
-            LinearProgressIndicator(
-                progress = { task.progress },
-                modifier = Modifier.padding(16.dp)
-            )
-        }
+//        for (task in tasksState) {
+//            Text(task.title)
+//            LinearProgressIndicator(
+//                progress = { task.progress },
+//                modifier = Modifier.padding(16.dp)
+//            )
+//        }
 
         Button(onClick = {
             if (isPaused.value) {
@@ -94,7 +93,7 @@ suspend fun runningAll(tasksState: MutableList<Task>, isPaused:State<Boolean>) {
 
 fun resetAll(tasksState: MutableList<Task>) {
     tasksState.forEach { task ->
-        task.progress = 0f
+        //task.progress = 0f
         task.isCompleted = false
     }
 }
@@ -107,7 +106,7 @@ suspend fun run(task: Task, isPaused: State<Boolean>): Boolean {
         if (isPaused.value) {
             i += task.progressionSpeed
             // Cette mise à jour déclenchera une recomposition si task.progress est observable
-            task.progress = i
+            //task.progress = i
         }
     }
     return true
