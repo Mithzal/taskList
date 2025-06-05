@@ -2,7 +2,6 @@ package com.example.td2.ui.task
 
 
 import android.content.Intent
-import android.content.Intent.*
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
@@ -24,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.td2.LocalApp
 import com.example.td2.R
-import com.example.td2.TaskApplication
 import com.example.td2.ui.viewmodel.TaskListViewModelFactory
 import com.example.td2.ui.viewmodel.TaskListViewModel
 import androidx.compose.runtime.getValue

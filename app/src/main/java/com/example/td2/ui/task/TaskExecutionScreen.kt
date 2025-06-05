@@ -23,7 +23,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.td2.LocalApp
 import com.example.td2.data.local.Task
 import kotlinx.coroutines.*
-import com.example.td2.TaskApplication
 import com.example.td2.ui.viewmodel.TaskListViewModel
 import com.example.td2.ui.viewmodel.TaskListViewModelFactory
 
