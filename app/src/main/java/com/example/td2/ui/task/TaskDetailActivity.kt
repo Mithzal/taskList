@@ -24,6 +24,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -115,6 +116,12 @@ fun DetailScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(16.dp)
+                        .background( if (task!!.isCompleted){ Color(0xFF287A36
+                        )
+                        } else { Color(
+                            0xFFC52B3C
+                        )
+                        })
                         .animateContentSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -128,12 +135,6 @@ fun DetailScreen(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Spacer(modifier = Modifier.weight(0.5f))
-                    val image = if (task!!.isCompleted) {
-                        painterResource(id = R.drawable.baseline_task_alt_24)
-                    } else {
-                        painterResource(id = R.drawable.baseline_task_alt_black)
-                    }
-                    Image(painter = image, contentDescription = null)
 
                     Button(onClick = {
                         val intent = Intent(Intent.ACTION_SEND).apply {
