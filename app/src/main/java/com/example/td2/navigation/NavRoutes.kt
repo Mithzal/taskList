@@ -6,14 +6,14 @@ import android.net.Uri
 enum class NavRoutes(val route: String) {
     MAIN_SCREEN("mainScreen"),
     ADD_TASK("addTaskScreen"),
-    TASK_DETAIL("taskDetailScreen/{title}/{description}/{isCompleted}"),
+    TASK_DETAIL("taskDetailScreen/{id}"),
     PROGRESS("progress"),
     QUOTE("quote");
 
     // Méthodes utilitaires pour les routes avec paramètres
-    fun createRoute(title: String, description: String, isCompleted: Boolean): String {
+    fun createRoute(id : Int): String {
         return when (this) {
-            TASK_DETAIL -> "taskDetailScreen/${Uri.encode(title)}/${Uri.encode(description)}/$isCompleted"
+            TASK_DETAIL -> "taskDetailScreen/${id}"
             else -> route
         }
     }

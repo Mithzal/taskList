@@ -1,5 +1,6 @@
-package com.example.td2.model
+package com.example.td2.repository
 
+import com.example.td2.data.local.Task
 import kotlinx.coroutines.flow.Flow
 
 interface TasksRepository {

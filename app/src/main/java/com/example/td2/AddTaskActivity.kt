@@ -11,29 +11,21 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.td2.model.Task
+import com.example.td2.data.local.Task
 import com.example.td2.navigation.NavRoutes
-import com.example.td2.model.TasksRepository
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.td2.repository.TasksRepository
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import android.app.Application
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import com.example.td2.model.AppContainer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import android.content.Context
 import com.example.td2.model.AppDataContainer
-import com.example.td2.model.OfflineTaskRepository
 
 
 class AddTaskActivity : ComponentActivity() {

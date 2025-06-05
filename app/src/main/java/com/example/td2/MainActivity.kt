@@ -1,11 +1,9 @@
 package com.example.td2
 
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.td2.ui.theme.Td2Theme
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,21 +29,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
-import com.example.td2.model.Task
-import com.example.td2.model.TasksRepository
-import kotlinx.coroutines.flow.Flow
-import com.example.td2.navigation.DetailScreen
+import com.example.td2.data.local.Task
+import com.example.td2.ui.task.DetailScreen
 import com.example.td2.navigation.NavRoutes
-import com.example.td2.navigation.TaskExecutionScreen
-import com.example.td2.navigation.quoteScreen
+import com.example.td2.ui.task.TaskExecutionScreen
+import com.example.td2.ui.quote.quoteScreen
 import android.app.Application
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.map
+import com.example.td2.ui.viewmodel.TaskListViewModel
+import com.example.td2.ui.viewmodel.TaskListViewModelFactory
 
 @Composable
 fun AppNavigation() {
@@ -57,14 +50,10 @@ fun AppNavigation() {
         }
         composable(NavRoutes.ADD_TASK.route) { AddTaskScreen(navController = navController) }
         composable(NavRoutes.TASK_DETAIL.route, arguments = listOf(
-            navArgument("title") { type = NavType.StringType },
-            navArgument("description") { type = NavType.StringType },
-            navArgument("isCompleted") { type = NavType.StringType }
+            navArgument("id") { type = NavType.StringType }
         )) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("title") ?: ""
-            val description = backStackEntry.arguments?.getString("description") ?: ""
-            val isCompleted = backStackEntry.arguments?.getString("isCompleted")?.toBoolean() == true
-            DetailScreen(title, description, isCompleted, navController = navController)
+            val id = backStackEntry.arguments?.getString("id") ?: "0"
+            DetailScreen(id, navController = navController)
         }
         composable(NavRoutes.PROGRESS.route) { TaskExecutionScreen() }
         composable(NavRoutes.QUOTE.route) { quoteScreen(navController = navController) }
@@ -111,7 +100,8 @@ fun TaskListScreen(
             TaskItem(
                 task,
                 Modifier.align(Alignment.CenterHorizontally),
-                navController
+                navController,
+                viewModel = viewModel
             )
         }
         Button(onClick = { navController.navigate(NavRoutes.ADD_TASK.route) }) {
@@ -127,26 +117,27 @@ fun TaskListScreen(
 }
 
 @Composable
-fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavController) {
+fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavController,
+             viewModel: TaskListViewModel = viewModel(
+    factory = TaskListViewModelFactory(LocalApp.current.let { (it as TaskApplication).container.taskRepository })
+)) {
     var modified by remember { mutableStateOf(task.isCompleted) }
 
     Row {
-        Button(onClick = {
-            val title = Uri.encode(task.title)
-            val description = Uri.encode(task.description)
-            val isCompleted = task.isCompleted
-            navController.navigate(NavRoutes.TASK_DETAIL.createRoute(title, description, isCompleted))
-        }) {
-            Checkbox(checked = modified, onCheckedChange = { modified = it })
-            Text(text = task.title)
-            Text(text = task.description)
+        Button(
+            onClick = {
+                val id = task.id
 
-            val image = if (modified) {
-                painterResource(id = R.drawable.baseline_task_alt_24)
-            } else {
-                painterResource(id = R.drawable.baseline_task_alt_black)
-            }
-            Image(painter = image, contentDescription = null)
+                navController.navigate(NavRoutes.TASK_DETAIL.createRoute(id))
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (modified) androidx.compose.ui.graphics.Color(0xFFB2FF59)
+                else androidx.compose.ui.graphics.Color(0xFFFF8A65)
+            )
+        ) {
+            Checkbox(checked = modified, onCheckedChange = { modified = it
+                viewModel.updateTask(task.copy(isCompleted = it))})
+            Text(text = task.title)
         }
     }
 }
@@ -161,17 +152,3 @@ fun GreetingPreview() {
 
 // ViewModel pour la liste des tâches
 
-// Remplacez 'YourApplication' par le nom réel de votre classe Application qui contient le container/repository
-class TaskListViewModel(private val repository: TasksRepository) : ViewModel() {
-    val tasks: Flow<List<Task>> = repository.getAllTasksStream()
-}
-
-class TaskListViewModelFactory(private val repository: TasksRepository) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(TaskListViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return TaskListViewModel(repository) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}

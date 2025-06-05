@@ -1,9 +1,10 @@
-package com.example.td2.model
+package com.example.td2.repository
 
+import com.example.td2.data.local.Task
+import com.example.td2.data.local.TaskDao
 import kotlinx.coroutines.flow.Flow
 
-
-class OfflineTaskRepository(private val taskDao: TaskDao) :TasksRepository {
+class OfflineTaskRepository(private val taskDao: TaskDao) : TasksRepository {
 
     override fun getAllTasksStream() : Flow<List<Task>> = taskDao.getAllTasks()
 

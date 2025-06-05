@@ -1,4 +1,4 @@
-package com.example.td2.model
+package com.example.td2.data.local
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -11,9 +11,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insert(task: Task)
-
 
     @Update
     suspend fun update(task: Task)
@@ -25,7 +24,7 @@ interface TaskDao {
     fun getAllTasks(): Flow<List<Task>>
 
     @Query("SELECT * FROM task_table WHERE id = :taskId")
-    fun getTaskById(taskId: Int): Flow<Task>
+    fun getTaskById(taskId: Int): Flow<Task?>
 
 
 }

@@ -2,6 +2,9 @@ package com.example.td2.model
 
 
 import android.content.Context
+import com.example.td2.data.local.ListDatabase
+import com.example.td2.repository.OfflineTaskRepository
+import com.example.td2.repository.TasksRepository
 
 /**
  * App container for Dependency injection.

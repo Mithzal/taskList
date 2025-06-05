@@ -1,10 +1,10 @@
-package com.example.td2.navigation
+package com.example.td2.ui.task
 
 
 import android.content.Intent
-import android.os.Bundle
+import android.content.Intent.*
+import android.net.Uri
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,51 +14,53 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import com.example.td2.LocalApp
 import com.example.td2.R
+import com.example.td2.TaskApplication
+import com.example.td2.ui.viewmodel.TaskListViewModelFactory
+import com.example.td2.ui.viewmodel.TaskListViewModel
+import androidx.compose.runtime.getValue
+import com.example.td2.navigation.NavRoutes
 
-class TaskDetailActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            val title = "titre"
-            val description = "description"
-            val isDone = false
-
-            DetailScreen(title, description, isDone, navController = rememberNavController())
-        }
-    }
-}
 
 @Composable
-fun DetailScreen(title : String = "default", description : String = "default", isDone :Boolean, navController: NavController) {
+fun DetailScreen(
+    id: String,
+    navController: NavController,
+    viewModel: TaskListViewModel = viewModel(
+        factory = TaskListViewModelFactory(LocalApp.current.let { (it as TaskApplication).container.taskRepository })
+    )
+) {
     val context = LocalContext.current
-    if(context is ComponentActivity) {
+    val taskFlow = viewModel.getTaskById(id)
+    val task by taskFlow.collectAsState(initial = null)
 
+    if (context is ComponentActivity && task != null) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-
         ) {
             Spacer(modifier = Modifier.weight(1f))
 
-            Text(text = title)
+            Text(text = task!!.title)
             Spacer(modifier = Modifier.weight(1f))
 
-            Text(text = description)
+            Text(text = Uri.decode(task!!.description))
             Spacer(modifier = Modifier.weight(1f))
 
             Spacer(modifier = Modifier.weight(0.5f))
-            val image = if (isDone) {
+            val image = if (task!!.isCompleted) {
                 painterResource(id = R.drawable.baseline_task_alt_24)
             } else {
                 painterResource(id = R.drawable.baseline_task_alt_black)
@@ -68,7 +70,7 @@ fun DetailScreen(title : String = "default", description : String = "default", i
             Button(onClick = {
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Title: $title\nDescription: $description\nisCompleted: $isDone")
+                    putExtra(Intent.EXTRA_TEXT, "Title: ${task!!.title}\nDescription: ${task!!.description}\nisCompleted: ${task!!.isCompleted}")
                 }
                 context.startActivity(intent)
             }) {
@@ -78,9 +80,30 @@ fun DetailScreen(title : String = "default", description : String = "default", i
             Button(onClick = { navController.navigate(NavRoutes.MAIN_SCREEN.route) }) {
                 Text("Cancel")
             }
+            Button(
+                onClick = {
+                    // Stockez la référence à la tâche
+                    val taskToDelete = task
+
+                    // Naviguez d'abord
+                    navController.navigate(NavRoutes.MAIN_SCREEN.route) {
+                        // Effacer le back stack pour éviter de revenir à cet écran
+                        popUpTo(NavRoutes.MAIN_SCREEN.route) { inclusive = true }
+                    }
+
+                    // Supprimez ensuite la tâche
+                    if (taskToDelete != null) {
+                        viewModel.deleteTask(taskToDelete)
+                    }
+                }
+            ) {
+                Text("Delete")
+            }
 
             Spacer(modifier = Modifier.weight(1f))
         }
+    } else {
+        // Afficher un message si la tâche est null
+        Text(text = "Tâche non trouvée")
     }
 }
-
