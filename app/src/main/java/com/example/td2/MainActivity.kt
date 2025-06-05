@@ -20,58 +20,73 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.td2.ui.theme.Td2Theme
-import androidx.compose.ui.Alignment
 import androidx.navigation.NavController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import com.example.td2.data.local.Task
-import com.example.td2.ui.task.DetailScreen
 import com.example.td2.navigation.NavRoutes
-import com.example.td2.ui.task.TaskExecutionScreen
-import com.example.td2.ui.quote.quoteScreen
 import android.app.Application
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
-import com.example.td2.ui.task.AddTaskScreen
+import androidx.compose.ui.graphics.Color
 import com.example.td2.ui.task.TaskApplication
 import com.example.td2.ui.viewmodel.TaskListViewModel
 import com.example.td2.ui.viewmodel.TaskListViewModelFactory
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.example.td2.navigation.AppNavigation
+import kotlinx.coroutines.delay
 
-@Composable
-fun AppNavigation() {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "mainScreen") {
-        composable(NavRoutes.MAIN_SCREEN.route) {
-            TaskListScreen(navController = navController)
-        }
-        composable(NavRoutes.ADD_TASK.route) { AddTaskScreen(navController = navController) }
-        composable(NavRoutes.TASK_DETAIL.route, arguments = listOf(
-            navArgument("id") { type = NavType.StringType }
-        )) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("id") ?: "0"
-            DetailScreen(id, navController = navController)
-        }
-        composable(NavRoutes.PROGRESS.route) { TaskExecutionScreen() }
-        composable(NavRoutes.QUOTE.route) { quoteScreen(navController = navController) }
-    }
-}
+
 
 val LocalApp = staticCompositionLocalOf<Application> {
     error("No Application provided")
 }
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Configuration plein écran
         enableEdgeToEdge()
+
+        // Pour masquer complètement la barre de navigation
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
         setContent {
-            // Fournit l'instance Application à la composition
             CompositionLocalProvider(LocalApp provides application) {
                 Td2Theme {
                     AppNavigation()
@@ -90,39 +105,147 @@ fun TaskListScreen(
     )
 ) {
     val tasks by viewModel.tasks.collectAsState(initial = emptyList())
+    val scrollState = rememberScrollState()
+    val buttonVisible = remember { derivedStateOf { scrollState.value < 200 } }
+    val showLimitMessage = remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        for (task in tasks) {
-            TaskItem(
-                task,
-                Modifier.align(Alignment.CenterHorizontally),
-                navController,
-                viewModel = viewModel
-            )
-        }
-        Button(onClick = { navController.navigate(NavRoutes.ADD_TASK.route) }) {
-            Text(text = "Ajouter une tâche")
-        }
-        Button(onClick = { navController.navigate(NavRoutes.PROGRESS.route) }) {
-            Text("Afficher le progrès")
-        }
-        Button(onClick = { navController.navigate(NavRoutes.QUOTE.route) }) {
-            Text("Quote of the day !")
+
+    LaunchedEffect(showLimitMessage.value) {
+        if (showLimitMessage.value) {
+            delay(3000)
+            showLimitMessage.value = false
         }
     }
+
+
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(
+                    onClick = { navController.navigate(NavRoutes.PROGRESS.route) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Afficher le progrès")
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = { navController.navigate(NavRoutes.QUOTE.route) },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Quote of the day !")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            tasks.forEach { task ->
+                TaskItem(
+                    task = task,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    navController = navController,
+                    viewModel = viewModel
+                )
+            }
+
+            Spacer(modifier = Modifier.height(80.dp)) // Espace pour le bouton flottant
+        }
+
+
+        AnimatedVisibility(
+            // Le bouton n'est visible que si l'utilisateur est proche du haut de la liste
+            visible = buttonVisible.value,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 16.dp),
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut()
+        ) {
+            // Bouton avec élévation pour effet de profondeur
+            ElevatedButton(
+                onClick = {
+                    // Vérifier le nombre de tâches avant de naviguer
+                    if (tasks.size >= 20) {
+                        showLimitMessage.value = true
+                    } else {
+                        navController.navigate(NavRoutes.ADD_TASK.route)
+                    }
+                },
+                modifier = Modifier
+                    .padding(
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ) // Le padding doit être appliqué avant la taille
+                    .size(56.dp), // Taille fixe pour un bouton parfaitement rond
+                shape = CircleShape, // Forme circulaire pour le bouton
+                elevation = ButtonDefaults.elevatedButtonElevation(
+                    defaultElevation = 6.dp
+                ),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp) // Supprimer le padding interne par défaut
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Ajouter une tâche",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.White // Assurer que l'icône est visible
+                )
+            }
+        }
+        AnimatedVisibility(
+            visible = showLimitMessage.value,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .zIndex(10f), // Garantit que le message est toujours au premier plan
+
+            enter = slideInVertically { -it } + fadeIn(),
+            exit = slideOutVertically { -it } + fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Red.copy(alpha = 0.8f))
+                    .padding(vertical = 12.dp)
+            ) {
+                Text(
+                    text = "Vous ne pouvez pas ajouter plus de 20 tâches.",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+
+
 }
 
+
 @Composable
-fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavController,
-             viewModel: TaskListViewModel = viewModel(
-    factory = TaskListViewModelFactory(LocalApp.current.let { (it as TaskApplication).container.taskRepository })
-)) {
+fun TaskItem(
+    task: Task, modifier: Modifier = Modifier, navController: NavController,
+    viewModel: TaskListViewModel = viewModel(
+        factory = TaskListViewModelFactory(LocalApp.current.let { (it as TaskApplication).container.taskRepository })
+    )
+) {
     var modified by remember { mutableStateOf(task.isCompleted) }
 
     Row {
@@ -133,12 +256,17 @@ fun TaskItem(task: Task, modifier: Modifier = Modifier, navController: NavContro
                 navController.navigate(NavRoutes.TASK_DETAIL.createRoute(id))
             },
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (modified) androidx.compose.ui.graphics.Color(0xFFB2FF59)
-                else androidx.compose.ui.graphics.Color(0xFFFF8A65)
+                containerColor = animateColorAsState(
+                    targetValue = if (modified) Color(0xFFB2FF59)
+                    else Color(0xFFFF8A65),
+                    animationSpec = tween(durationMillis = 300)
+                ).value
             )
         ) {
-            Checkbox(checked = modified, onCheckedChange = { modified = it
-                viewModel.updateTask(task.copy(isCompleted = it))})
+            Checkbox(checked = modified, onCheckedChange = {
+                modified = it
+                viewModel.updateTask(task.copy(isCompleted = it))
+            })
             Text(text = task.title)
         }
     }
@@ -151,6 +279,3 @@ fun GreetingPreview() {
         AppNavigation()
     }
 }
-
-// ViewModel pour la liste des tâches
-

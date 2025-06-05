@@ -1,7 +1,5 @@
 package com.example.td2.navigation
 
-import android.net.Uri
-
 // Créez un fichier séparé NavRoutes.kt
 enum class NavRoutes(val route: String) {
     MAIN_SCREEN("mainScreen"),

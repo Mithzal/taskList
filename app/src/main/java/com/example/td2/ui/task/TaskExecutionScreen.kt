@@ -58,8 +58,8 @@ fun TaskExecutionScreen() {
         for (task in tasksState) {
             Text(task.title)
             LinearProgressIndicator(
-                progress = task.progress,
-                modifier = Modifier.padding(16.dp)
+            progress = { task.progress },
+            modifier = Modifier.padding(16.dp),
             )
         }
 
