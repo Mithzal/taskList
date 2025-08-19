@@ -26,13 +26,17 @@ import kotlin.random.Random
 import com.example.td2.data.TaskDetails
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AddTaskActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,8 +70,8 @@ object AppViewModelProvider {
 }
 
 data class TaskUiState(
-    val taskDetails : TaskDetails = TaskDetails(),
-    val isEntryValid : Boolean = false
+    val taskDetails: TaskDetails = TaskDetails(),
+    val isEntryValid: Boolean = false
 )
 
 
@@ -78,6 +82,11 @@ fun AddTaskScreen(
     viewModel: AddTaskViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val taskUiState = viewModel.taskUiState
+    val datePickerState = rememberDatePickerState()
+    val selectedDateMillis = remember { mutableStateOf<Long?>(null) }
+    val showDatePicker = remember { mutableStateOf(false) }
+    val hasChanged = remember { mutableStateOf(false) }
+
 
     // Observe l'état de sauvegarde pour naviguer après ajout
     if (viewModel.taskSaved) {
@@ -86,8 +95,14 @@ fun AddTaskScreen(
         }
     }
 
-    // État pour prévisualiser la vitesse de progression
-    val progressionSpeed = remember { mutableStateOf(0.1f + (0.5f - 0.1f) * Random.nextFloat()) }
+    LaunchedEffect(datePickerState.selectedDateMillis) {
+        datePickerState.selectedDateMillis?.let { timestamp ->
+            selectedDateMillis.value = timestamp
+            // Mettre à jour le modèle avec la date sélectionnée
+            viewModel.updateUiState(taskUiState.taskDetails.copy(deadlineDate = timestamp))
+        }
+    }
+
 
     Scaffold(
         topBar = {
@@ -105,7 +120,8 @@ fun AddTaskScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -127,7 +143,8 @@ fun AddTaskScreen(
                     OutlinedTextField(
                         value = taskUiState.taskDetails.name,
                         onValueChange = {
-                            viewModel.updateUiState(taskUiState.taskDetails.copy(name = it))
+                            viewModel.updateUiState(taskUiState.taskDetails.copy(name = it));
+                            hasChanged.value = true
                         },
                         label = { Text("Titre de la tâche") },
                         modifier = Modifier.fillMaxWidth(),
@@ -136,49 +153,77 @@ fun AddTaskScreen(
                     OutlinedTextField(
                         value = taskUiState.taskDetails.description,
                         onValueChange = {
-                            viewModel.updateUiState(taskUiState.taskDetails.copy(description = it))
+                            viewModel.updateUiState(taskUiState.taskDetails.copy(description = it));
+                            hasChanged.value = true
                         },
                         label = { Text("Description de la tâche") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
+                    OutlinedButton(
+                        onClick = { showDatePicker.value = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.DateRange, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            if (selectedDateMillis.value == null)
+                                "Sélectionner une date limite"
+                            else {
+                                val date = Date(selectedDateMillis.value!!)
+                                SimpleDateFormat("EEEE d MMMM yyyy", Locale.FRANCE).format(date)
+                            }
+                        )
+                    }
+                    if (showDatePicker.value) {
+
+                        DatePickerDialog(
+                            onDismissRequest = { showDatePicker.value = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    datePickerState.selectedDateMillis?.let { timestamp ->
+                                        viewModel.updateUiState(
+                                            taskUiState.taskDetails.copy(
+                                                deadlineDate = timestamp
+                                            )
+                                        );
+                                        hasChanged.value = true
+                                    }
+                                    showDatePicker.value = false
+                                }) {
+                                    Text("OK")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showDatePicker.value = false }) {
+                                    Text("Annuler")
+                                }
+                            }
+                        ) {
+                            DatePicker(state = datePickerState)
+                        }
+                    }
+
+
                 }
             }
+            val currentDateValue = selectedDateMillis.value
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Vitesse de progression",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+            if (currentDateValue != null && currentDateValue < System.currentTimeMillis() && hasChanged.value) {
+                Text(
+                    text = "La deadline ne peut pas être antérieur à aujourd'hui.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else if (!taskUiState.isEntryValid && hasChanged.value) {
+                Text(
+                    text = "Veuillez remplir tous les champs correctement.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                //ne rien afficher si l'entrée est valide ou qu'il n'y a pas eu de changement
 
-                    Text(
-                        text = "Vitesse: ${(progressionSpeed.value * 100).toInt()}%",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                    LinearProgressIndicator(
-                        progress = progressionSpeed.value,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Button(
-                        onClick = { progressionSpeed.value = 0.1f + (0.5f - 0.1f) * Random.nextFloat() },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Icon(Icons.Filled.Refresh, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Régénérer")
-                    }
-                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -195,7 +240,6 @@ fun AddTaskScreen(
 
                 Button(
                     onClick = {
-                        viewModel.updateUiState(taskUiState.taskDetails.copy(progressionSpeed = progressionSpeed.value))
                         viewModel.saveTask()
                     },
                     enabled = taskUiState.isEntryValid,

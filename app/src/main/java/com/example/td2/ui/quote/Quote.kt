@@ -49,14 +49,13 @@ class QuoteViewModel : ViewModel() {
             try {
                 val jsonString = Api.retrofitService.getQuote()
 
-                // Extraction avec regex
+                // Extraction with regex
                 val quoteRegex = "\"q\":\"(.*?)\"".toRegex()
                 val authorRegex = "\"a\":\"(.*?)\"".toRegex()
 
                 val quote = quoteRegex.find(jsonString)?.groupValues?.get(1) ?: ""
                 val author = authorRegex.find(jsonString)?.groupValues?.get(1) ?: ""
 
-                // Afficher directement la réponse JSON brute
                 _quoteState.value = QuoteUiState.Success("$quote\n\n- $author")
             } catch (e: Exception) {
                 _quoteState.value = QuoteUiState.Error(e.message ?: "Erreur inconnue")

@@ -5,7 +5,6 @@ enum class NavRoutes(val route: String) {
     MAIN_SCREEN("mainScreen"),
     ADD_TASK("addTaskScreen"),
     TASK_DETAIL("taskDetailScreen/{id}"),
-    PROGRESS("progress"),
     QUOTE("quote");
 
     // Méthodes utilitaires pour les routes avec paramètres

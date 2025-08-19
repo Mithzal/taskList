@@ -135,12 +135,6 @@ fun TaskListScreen(
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Button(
-                    onClick = { navController.navigate(NavRoutes.PROGRESS.route) },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Afficher le progrès")
-                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 

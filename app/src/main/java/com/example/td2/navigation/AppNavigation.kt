@@ -10,7 +10,6 @@ import com.example.td2.TaskListScreen
 import com.example.td2.ui.quote.quoteScreen
 import com.example.td2.ui.task.AddTaskScreen
 import com.example.td2.ui.task.DetailScreen
-import com.example.td2.ui.task.TaskExecutionScreen
 
 
     @Composable
@@ -28,7 +27,6 @@ import com.example.td2.ui.task.TaskExecutionScreen
                 val id = backStackEntry.arguments?.getString("id") ?: "0"
                 DetailScreen(id, navController = navController)
             }
-            composable(NavRoutes.PROGRESS.route) { TaskExecutionScreen() }
             composable(NavRoutes.QUOTE.route) { quoteScreen(navController = navController) }
         }
     }

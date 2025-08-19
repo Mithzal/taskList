@@ -30,7 +30,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,6 +50,9 @@ import com.example.td2.R
 import com.example.td2.ui.viewmodel.TaskListViewModelFactory
 import com.example.td2.ui.viewmodel.TaskListViewModel
 import com.example.td2.navigation.NavRoutes
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,6 +68,7 @@ fun DetailScreen(
     val taskFlow = viewModel.getTaskById(id)
     val task by taskFlow.collectAsState(initial = null)
     var isDeleting by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(isDeleting) {
         if (isDeleting && task != null) {
@@ -88,7 +94,7 @@ fun DetailScreen(
                         exit = fadeOut() + scaleOut()
                     ) {
                         IconButton(
-                            onClick = { isDeleting = true },
+                            onClick = { showConfirmDialog = true },
                             modifier = Modifier.animateContentSize()
                         ) {
                             Icon(
@@ -133,6 +139,11 @@ fun DetailScreen(
 
                     Text(text = Uri.decode(task!!.description))
                     Spacer(modifier = Modifier.weight(1f))
+                    task!!.deadlineDate?.let { timestamp ->
+                        val date = Date(timestamp)
+                        val formattedDate = SimpleDateFormat("EEEE d MMMM yyyy", Locale.getDefault()).format(date)
+                        Text("Deadline : $formattedDate")
+                    }
 
                     Spacer(modifier = Modifier.weight(0.5f))
 
@@ -155,6 +166,29 @@ fun DetailScreen(
             } else {
                 // Afficher un message si la tâche est null
                 Text(text = "Tâche non trouvée")
+            }
+            if (showConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { showConfirmDialog = false },
+                    title = { Text("Confirmation de suppression") },
+                    text = { Text("Êtes-vous sûr de vouloir supprimer cette tâche ?") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showConfirmDialog = false
+                                isDeleting = true
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                        ) {
+                            Text("Supprimer")
+                        }
+                    },
+                    dismissButton = {
+                        Button(onClick = { showConfirmDialog = false }) {
+                            Text("Annuler")
+                        }
+                    }
+                )
             }
         }
     }

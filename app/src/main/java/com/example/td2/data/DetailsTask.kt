@@ -8,7 +8,7 @@ data class TaskDetails(
     val name : String = "",
     val description : String = "",
     val isCompleted : Boolean = false,
-    val progressionSpeed : Float = 0f
+    val deadlineDate : Long = 0L,
 )
 
 fun TaskDetails.toTask() : Task = Task(
@@ -16,7 +16,7 @@ fun TaskDetails.toTask() : Task = Task(
     title = name,
     description = description,
     isCompleted = isCompleted,
-    progressionSpeed = progressionSpeed
+    deadlineDate = deadlineDate
 )
 
 fun Task.toTaskDetails(): TaskDetails = TaskDetails(
@@ -24,7 +24,7 @@ fun Task.toTaskDetails(): TaskDetails = TaskDetails(
     name = title,
     description = description,
     isCompleted = isCompleted,
-    progressionSpeed = progressionSpeed
+    deadlineDate = deadlineDate
 )
 
 fun Task.toTaskUiState(isEntryValid: Boolean = false): TaskUiState = TaskUiState(

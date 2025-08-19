@@ -33,8 +33,9 @@ class AddTaskViewModel(private val tasksRepository: TasksRepository) : ViewModel
     }
 
     private fun validateInput(uiState : TaskDetails = taskUiState.taskDetails) : Boolean{
+        val currentTime = System.currentTimeMillis()
         return uiState.name.isNotBlank() && uiState.description.isNotBlank()
-                && uiState.progressionSpeed in 0f..1f
+                &&  uiState.deadlineDate >= currentTime
     }
 
 }
