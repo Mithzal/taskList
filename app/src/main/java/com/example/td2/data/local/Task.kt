@@ -2,7 +2,7 @@ package com.example.td2.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.Date
+
 
 @Entity(tableName = "task_table")
 data class Task(

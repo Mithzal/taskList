@@ -22,7 +22,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.td2.model.AppContainer
 import com.example.td2.model.AppDataContainer
 import com.example.td2.ui.viewmodel.AddTaskViewModel
-import kotlin.random.Random
 import com.example.td2.data.TaskDetails
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
