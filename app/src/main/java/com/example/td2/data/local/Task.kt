@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "task_table")
 data class Task(
     @PrimaryKey(autoGenerate = true)
-    val id :Int = 0,
+    val id: Int = 0,
     val title: String,
     val description: String,
     var isCompleted: Boolean = false,
-    var deadlineDate : Long = System.currentTimeMillis()
+    var deadlineDate: Long? = System.currentTimeMillis()
 )

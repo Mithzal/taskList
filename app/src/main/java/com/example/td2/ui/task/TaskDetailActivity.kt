@@ -117,12 +117,6 @@ fun DetailScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(16.dp)
-                        .background( if (task!!.isCompleted){ Color(0xFF287A36
-                        )
-                        } else { Color(
-                            0xFFC52B3C
-                        )
-                        })
                         .animateContentSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -134,11 +128,11 @@ fun DetailScreen(
 
                     Text(text = Uri.decode(task!!.description))
                     Spacer(modifier = Modifier.weight(1f))
-                    task!!.deadlineDate.let { timestamp ->
+                    task!!.deadlineDate?.let { timestamp ->
                         val date = Date(timestamp)
                         val formattedDate = SimpleDateFormat("EEEE d MMMM yyyy", Locale.getDefault()).format(date)
                         Text("Deadline : $formattedDate")
-                    }
+                    } ?: Text("Pas de deadline")
 
                     Spacer(modifier = Modifier.weight(0.5f))
 

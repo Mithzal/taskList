@@ -85,6 +85,7 @@ fun AddTaskScreen(
     val selectedDateMillis = remember { mutableStateOf<Long?>(null) }
     val showDatePicker = remember { mutableStateOf(false) }
     val hasChanged = remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
 
     // Observe l'état de sauvegarde pour naviguer après ajout
@@ -120,7 +121,7 @@ fun AddTaskScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {

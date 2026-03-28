@@ -4,11 +4,11 @@ import com.example.td2.data.local.Task
 import com.example.td2.ui.task.TaskUiState
 
 data class TaskDetails(
-    val id : Int =0,
-    val name : String = "",
-    val description : String = "",
-    val isCompleted : Boolean = false,
-    val deadlineDate : Long = 0L,
+    val id: Int =0,
+    val name: String = "",
+    val description: String = "",
+    val isCompleted: Boolean = false,
+    val deadlineDate: Long? = 0L,
 )
 
 fun TaskDetails.toTask() : Task = Task(
@@ -16,7 +16,7 @@ fun TaskDetails.toTask() : Task = Task(
     title = name,
     description = description,
     isCompleted = isCompleted,
-    deadlineDate = deadlineDate
+    deadlineDate = if(deadlineDate == 0L) null else deadlineDate
 )
 
 fun Task.toTaskDetails(): TaskDetails = TaskDetails(
