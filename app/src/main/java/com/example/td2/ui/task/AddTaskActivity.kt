@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
@@ -110,7 +111,7 @@ fun AddTaskScreen(
                 title = { Text("Ajouter une tâche") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate(NavRoutes.MAIN_SCREEN.route) }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
                     }
                 }
             )
@@ -143,7 +144,7 @@ fun AddTaskScreen(
                     OutlinedTextField(
                         value = taskUiState.taskDetails.name,
                         onValueChange = {
-                            viewModel.updateUiState(taskUiState.taskDetails.copy(name = it));
+                            viewModel.updateUiState(taskUiState.taskDetails.copy(name = it))
                             hasChanged.value = true
                         },
                         label = { Text("Titre de la tâche") },
@@ -153,7 +154,7 @@ fun AddTaskScreen(
                     OutlinedTextField(
                         value = taskUiState.taskDetails.description,
                         onValueChange = {
-                            viewModel.updateUiState(taskUiState.taskDetails.copy(description = it));
+                            viewModel.updateUiState(taskUiState.taskDetails.copy(description = it))
                             hasChanged.value = true
                         },
                         label = { Text("Description de la tâche") },
@@ -186,7 +187,7 @@ fun AddTaskScreen(
                                             taskUiState.taskDetails.copy(
                                                 deadlineDate = timestamp
                                             )
-                                        );
+                                        )
                                         hasChanged.value = true
                                     }
                                     showDatePicker.value = false

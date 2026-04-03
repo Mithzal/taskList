@@ -21,7 +21,6 @@ import kotlinx.coroutines.delay
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
